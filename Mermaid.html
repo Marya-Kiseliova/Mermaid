@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Adventures of Lia the Little Mermaid</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Calm Harmony -->
+    <!-- Application Structure Plan: A linear, scroll-based "storybook" SPA. The structure follows the narrative chronologically with distinct scenes. Interactivity is introduced via a scroll-linked story timeline for navigation and character profiles for exploration. To improve reliability and remove external dependencies that caused freezing, the Gemini API calls for dialogues and story continuations have been replaced with pre-written, randomized content stored locally within the script. -->
+    <!-- Visualization & Content Choices: 
+        - Story Plot -> Goal: Narrative Flow -> Viz: Vertical Timeline -> Interaction: Scroll-Spy Highlighting -> Justification: Provides clear navigation and a sense of progress through the linear story. -> Method: HTML/CSS + JS.
+        - Character Info -> Goal: Exploration -> Viz: Clickable Character Cards -> Interaction: Click to reveal bio -> Justification: Adds a layer of interactivity and depth to the world without disrupting the main story. -> Method: HTML/CSS + JS.
+        - Story Themes -> Goal: Summarize/Inform -> Viz: Horizontal Bar Chart -> Interaction: Tooltips on hover -> Justification: Creatively reinterprets qualitative themes as "data" for a unique, infographic-style summary of the story's message. -> Library: Chart.js/Canvas.
+        - Story Expansion -> Goal: Engagement/Replayability -> Viz: Text Block -> Interaction: Button click to show new story -> Justification: Uses a pre-written array of stories to provide variety without the unreliability of an API call in this environment. -> Method: Local JS Array.
+        - Character Dialogue -> Goal: Engagement/World-building -> Viz: Modal Window -> Interaction: Button click to show dialogue -> Justification: Uses a pre-written array of dialogues for instant, reliable interaction. -> Method: Local JS Array. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Marck+Script&display=swap');
+        body {
+            font-family: 'Comfortaa', sans-serif;
+            background-color: #F0F8FF;
+        }
+        .title-font {
+            font-family: 'Marck Script', cursive;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -31px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background-color: #93C5FD;
+            border: 4px solid #DBEAFE;
+            transition: all 0.3s ease;
+        }
+        .timeline-item.active::before {
+            background-color: #1D4ED8;
+            transform: translateY(-50%) scale(1.2);
+        }
+        .gemini-button {
+            transition: all 0.3s ease;
+        }
+        .gemini-button:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        #modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #modal-overlay.visible {
+            display: flex; /* Show when visible class is added */
+        }
+    </style>
+</head>
+<body class="text-gray-700">
+
+    <!-- Header -->
+    <header class="text-center py-12 bg-white shadow-md">
+        <h1 class="title-font text-5xl md:text-7xl text-blue-800">The Adventures of Lia the Little Mermaid</h1>
+        <p class="mt-4 text-lg text-blue-600">An interactive story about friendship and courage</p>
+    </header>
+
+    <div class="container mx-auto p-4 md:p-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+            <!-- Timeline Navigation -->
+            <aside class="hidden lg:block col-span-1">
+                <div class="sticky top-8 bg-white p-6 rounded-2xl shadow-lg">
+                    <h3 class="font-bold text-xl mb-4 text-blue-800">Storyline</h3>
+                    <div class="relative border-l-4 border-blue-100 ml-4">
+                        <nav id="timeline-nav" class="flex flex-col space-y-4">
+                            <a href="#scene-1" class="pl-8 timeline-item relative">Birth</a>
+                            <a href="#scene-2" class="pl-8 timeline-item relative">Friends</a>
+                            <a href="#scene-3" class="pl-8 timeline-item relative">The Dream</a>
+                            <a href="#scene-4" class="pl-8 timeline-item relative">The Lesson</a>
+                            <a href="#scene-5" class="pl-8 timeline-item relative">Happiness</a>
+                        </nav>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="col-span-1 lg:col-span-3">
+                
+                <!-- Introduction and Characters -->
+                <section id="intro" class="bg-white p-8 rounded-2xl shadow-lg mb-12">
+                    <h2 class="title-font text-4xl text-blue-800 mb-4">Meet the Characters</h2>
+                    <p class="mb-6">This is a story about a little mermaid named Lia, who wanted to swim in the sea more than anything. Click on the cards to learn more about her and the friends who helped make her dream come true.</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div class="character-card cursor-pointer p-3 bg-blue-50 rounded-lg hover:shadow-md transition-shadow" data-character="lia">
+                            <span class="text-4xl">🧜‍♀️</span>
+                            <p class="font-bold mt-2">Lia</p>
+                        </div>
+                        <div class="character-card cursor-pointer p-3 bg-blue-50 rounded-lg hover:shadow-md transition-shadow" data-character="parents">
+                             <span class="text-4xl">👑</span>
+                            <p class="font-bold mt-2">Parents</p>
+                        </div>
+                        <div class="character-card cursor-pointer p-3 bg-blue-50 rounded-lg hover:shadow-md transition-shadow" data-character="faehri">
+                             <span class="text-4xl">🐠</span>
+                            <p class="font-bold mt-2">Faehri</p>
+                        </div>
+                        <div class="character-card cursor-pointer p-3 bg-blue-50 rounded-lg hover:shadow-md transition-shadow" data-character="don">
+                             <span class="text-4xl">🐡</span>
+                            <p class="font-bold mt-2">Don</p>
+                        </div>
+                    </div>
+                    <div id="character-bio" class="mt-6 p-4 bg-blue-100 border-l-4 border-blue-500 rounded-r-lg text-blue-800 hidden"></div>
+                </section>
+
+                <!-- Story Scenes -->
+                <div class="space-y-16">
+                    <section id="scene-1" class="story-scene">
+                        <div class="bg-white p-8 rounded-2xl shadow-lg">
+                            <h3 class="title-font text-3xl text-blue-800 mb-4">An Unusual Princess</h3>
+                            <p>In a castle, a King and Queen had a daughter. Her name was Lia, and she was a little mermaid. She had a beautiful tail covered in shimmering scales up to her shoulders. But on land, Lia's delicate scales would dry out, causing her pain. The girl often felt sad, watching other children play from her window.</p>
+                        </div>
+                    </section>
+
+                    <section id="scene-2" class="story-scene">
+                        <div class="bg-white p-8 rounded-2xl shadow-lg">
+                            <h3 class="title-font text-3xl text-blue-800 mb-4">Magical Friends</h3>
+                            <p>So Lia wouldn't be bored, her parents gave her a huge aquarium. In it lived two funny talking fish: a bright discus fish named **Faehri** and a round pufferfish named **Don**.</p>
+                            <button id="fish-dialogue-btn-1" class="gemini-button mt-4 px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600">✨ What are the fish talking about?</button>
+                        </div>
+                    </section>
+
+                    <section id="scene-3" class="story-scene">
+                        <div class="bg-white p-8 rounded-2xl shadow-lg">
+                            <h3 class="title-font text-3xl text-blue-800 mb-4">A Dream of the Sea</h3>
+                            <p>Lia grew up. Now she spent her days by the sea. "How I wish I could swim out there!" she dreamed. But neither she nor her parents knew how to swim in the sea. So the King and Queen asked Lia's loyal friends for help.</p>
+                        </div>
+                    </section>
+
+                    <section id="scene-4" class="story-scene">
+                         <div class="bg-white p-8 rounded-2xl shadow-lg">
+                            <h3 class="title-font text-3xl text-blue-800 mb-4">The First Swimming Lesson</h3>
+                            <p>At the seashore, Lia looked nervously at the big waves. But her friends were already splashing happily in the water. "Hold on to me like a lifebuoy!" puffed Don, inflating himself into a big, round ball. "Now move your tail like this!" taught the graceful Faehri. Lia tried, and she succeeded!</p>
+                            <button id="fish-dialogue-btn-2" class="gemini-button mt-4 px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600">✨ What are the fish talking about?</button>
+                        </div>
+                    </section>
+                    
+                    <section id="scene-5" class="story-scene">
+                        <div class="bg-white p-8 rounded-2xl shadow-lg">
+                            <h3 class="title-font text-3xl text-blue-800 mb-4">Happiness in the Deep</h3>
+                            <p>"I'm swimming!" she shouted joyfully. From then on, Lia swam in the sea with her faithful friends every day. And the King and Queen stood on the shore, happily waving to her.</p>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Analysis Section -->
+                <section id="analysis" class="bg-white p-8 rounded-2xl shadow-lg mt-16">
+                    <h2 class="title-font text-4xl text-blue-800 mb-2">Story Analysis</h2>
+                    <p class="mb-6">Every fairy tale has a lesson. This story shows how important friends and courage are. Let's look at the "ingredients" of Lia's success in a chart.</p>
+                    <div class="chart-container relative h-80 w-full max-w-2xl mx-auto">
+                        <canvas id="storyChart"></canvas>
+                    </div>
+                </section>
+                
+                <!-- Story Continuation -->
+                <section id="gemini-story" class="bg-white p-8 rounded-2xl shadow-lg mt-16 text-center">
+                    <h2 class="title-font text-4xl text-blue-800 mb-4">What Happened Next?</h2>
+                    <p class="mb-6">Want to know what other adventures awaited Lia and her friends? Click the button!</p>
+                    <button id="continue-story-button" class="gemini-button px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-full shadow-lg hover:from-purple-600 hover:to-pink-600">✨ Continue the Story</button>
+                    <div id="new-story-container" class="mt-6 p-6 bg-blue-50 rounded-lg text-left hidden text-lg"></div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+    
+    <!-- Modal for Fish Dialogue -->
+    <div id="modal-overlay">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4" onclick="event.stopPropagation()">
+            <h3 class="text-xl font-bold mb-4 text-blue-800">Fish Dialogue</h3>
+            <div id="modal-content" class="text-gray-700"></div>
+            <button id="close-modal-button" class="mt-6 w-full px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600">Close</button>
+        </div>
+    </div>
+
+    <footer class="text-center py-6 mt-12 bg-white/50">
+        <p class="text-blue-700">An interactive adaptation of a story by Maria Yasinskaya.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const characterData = {
+                lia: "<b>Lia</b> is a kind and dreamy mermaid princess. More than anything, she wanted to swim and play in the sea.",
+                parents: "<b>The King and Queen</b> are Lia's loving parents. They were not merfolk, but they deeply wanted their daughter to be happy.",
+                faehri: "<b>Faehri</b> is a graceful and clever discus fish. She became the best swimming coach for Lia.",
+                don: "<b>Don</b> is a good-natured but slightly timid pufferfish. He can puff up like a ball, which was very helpful during Lia's first lesson."
+            };
+
+            const characterCards = document.querySelectorAll('.character-card');
+            const bioContainer = document.getElementById('character-bio');
+
+            characterCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const characterKey = card.dataset.character;
+                    bioContainer.innerHTML = characterData[characterKey];
+                    bioContainer.classList.remove('hidden');
+                    
+                    characterCards.forEach(c => c.classList.remove('bg-blue-200'));
+                    card.classList.add('bg-blue-200');
+                });
+            });
+
+            const storyScenes = document.querySelectorAll('.story-scene');
+            const timelineLinks = document.querySelectorAll('#timeline-nav a');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        timelineLinks.forEach(link => {
+                            const linkHref = link.getAttribute('href');
+                            const correspondingItem = document.querySelector(`.timeline-item[href="${linkHref}"]`);
+                            if (linkHref === `#${entry.target.id}`) {
+                                correspondingItem.classList.add('active');
+                            } else {
+                                correspondingItem.classList.remove('active');
+                            }
+                        });
+                    }
+                });
+            }, { rootMargin: '-50% 0px -50% 0px', threshold: 0 });
+
+            storyScenes.forEach(scene => {
+                observer.observe(scene);
+            });
+            
+            const ctx = document.getElementById('storyChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Friendship', 'Parents\' Help', 'Courage', 'A Dream'],
+                    datasets: [{
+                        label: 'Contribution to Success',
+                        data: [90, 60, 75, 85],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(168, 85, 247, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(16, 185, 129, 1)',
+                            'rgba(239, 68, 68, 1)',
+                            'rgba(168, 85, 247, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.label}: ${context.raw}% contribution to success!`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 100,
+                             ticks: {
+                                callback: function(value) {
+                                    return value + '%'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            const fishDialogues = [
+                [
+                    "<b>Don:</b> Oh, Faehri, she's looking at us again! My scales are trembling! What if she wants to... pet us?!<br><b>Faehri:</b> Calm down, Don. She's just admiring us. We are very beautiful, after all.<br><b>Don:</b> Beautiful? I look like a panicking pancake! And you... well, yes, you're beautiful. Maybe she wants to pet you?",
+                    "<b>Faehri:</b> Don, did you notice the princess is a little sad today?<br><b>Don:</b> I did! Maybe her tummy hurts? Or is she hungry? Should we offer her our food? Oh wait, it's for us... Oh, this is so complicated!",
+                    "<b>Don:</b> Faehri, do you think there are corals on land?<br><b>Faehri:</b> Unlikely, Don. They have trees.<br><b>Don:</b> Trees? Are they like corals, but... dry? And without little worms? How dreadful!"
+                ],
+                [
+                    "<b>Faehri:</b> Hold on, Don! You're doing great!<br><b>Don:</b> Easy for you to say! I feel like an overinflated balloon! If I pop now, you'll fly to the castle on my jet stream!<br><b>Faehri:</b> Don't be dramatic. You're the perfect lifebuoy.",
+                    "<b>Don:</b> Oh, dear! I think I'm going to sneeze! Can you imagine what will happen?<br><b>Faehri:</b> Don, don't you dare! You'll create a tsunami!<br><b>Don:</b> I can't control it! Achoo... oh, no, false alarm. Phew, I almost washed the princess away.",
+                    "<b>Faehri:</b> Look, Lia is smiling! We're doing it!<br><b>Don:</b> Of course, we are! Who would doubt that the world's best inflatable mattress is me!"
+                ]
+            ];
+
+            const storyContinuations = [
+                "One day, Lia, Faehri, and Don found an old, mysterious map at the bottom of the sea. It showed a treasure chest! The friends immediately set off on a quest. Their path led through a dark seaweed forest, home to funny but timid seahorses. Don was afraid of everything, but Faehri bravely led her friends forward. In the end, they found the chest, and inside... a mountain of shiny shells of all the colors of the rainbow! Lia decorated her underwater garden with them, and it became the most beautiful in the entire kingdom.",
+                "Once, the friends were playing hide-and-seek among the coral reefs. Suddenly, they heard a faint cry. It was a little dolphin calf tangled in an old fishing net. Don immediately tried to chew through the rope, but he couldn't. Then, clever Faehri found a sharp stone, and together with Lia, they carefully cut the net. The rescued dolphin was so happy that in gratitude, it showed the friends a secret cave where glowing pearls grew!",
+                "One day, a big celebration began in the sea—the Day of the Singing Turtles. All the sea creatures gathered to listen to their wise songs. Lia wanted to participate and sing too, but she was very shy. So Faehri and Don held a rehearsal for her! Don puffed up to set the rhythm, and Faehri was a strict but kind audience. In the end, Lia sang such a beautiful song about friendship that even the old turtles shed a tear and gave her a necklace of moonstone."
+            ];
+
+            const continueStoryButton = document.getElementById('continue-story-button');
+            const newStoryContainer = document.getElementById('new-story-container');
+            const modalOverlay = document.getElementById('modal-overlay');
+            const modalContent = document.getElementById('modal-content');
+            const closeModalButton = document.getElementById('close-modal-button');
+            const fishDialogueBtn1 = document.getElementById('fish-dialogue-btn-1');
+            const fishDialogueBtn2 = document.getElementById('fish-dialogue-btn-2');
+
+            let lastDialogueIndices = [-1, -1];
+            let lastStoryIndex = -1;
+
+            function getRandomItem(arr, lastIndex) {
+                let newIndex;
+                do {
+                    newIndex = Math.floor(Math.random() * arr.length);
+                } while (arr.length > 1 && newIndex === lastIndex);
+                return { item: arr[newIndex], index: newIndex };
+            }
+
+            continueStoryButton.addEventListener('click', () => {
+                const { item, index } = getRandomItem(storyContinuations, lastStoryIndex);
+                lastStoryIndex = index;
+                newStoryContainer.innerHTML = item;
+                newStoryContainer.classList.remove('hidden');
+            });
+            
+            function openModal() {
+                modalOverlay.classList.add('visible');
+            }
+
+            function closeModal() {
+                modalOverlay.classList.remove('visible');
+            }
+            
+            closeModalButton.addEventListener('click', closeModal);
+            modalOverlay.addEventListener('click', (event) => {
+                if (event.target === modalOverlay) {
+                    closeModal();
+                }
+            });
+
+            function getFishDialogue(groupIndex) {
+                const { item, index } = getRandomItem(fishDialogues[groupIndex], lastDialogueIndices[groupIndex]);
+                lastDialogueIndices[groupIndex] = index;
+                modalContent.innerHTML = item;
+                openModal();
+            }
+
+            fishDialogueBtn1.addEventListener('click', () => getFishDialogue(0));
+            fishDialogueBtn2.addEventListener('click', () => getFishDialogue(1));
+        });
+    </script>
+</body>
+</html>
